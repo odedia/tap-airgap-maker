@@ -24,6 +24,8 @@ echo ""
 echo "Downloading PIVNET"
 echo "------------------"
 
+docker login registry.tanzu.vmware.com -u $IMGPKG_REGISTRY_USERNAME -p $IMGPKG_REGISTRY_PASSWORD
+
 mkdir -p pivnet
 wget -P pivnet "https://github.com/pivotal-cf/pivnet-cli/releases/download/v$PIVNET_VERSION/pivnet-darwin-amd64-4.1.1"
 wget -P pivnet "https://github.com/pivotal-cf/pivnet-cli/releases/download/v$PIVNET_VERSION/pivnet-darwin-arm64-4.1.1"

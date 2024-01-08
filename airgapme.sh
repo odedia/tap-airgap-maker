@@ -341,6 +341,11 @@ echo "-----------------------------------"
 tar -czf ~/tap-airgapped-install-$TAP_VERSION.tar.gz .
 
 echo ""
+echo "Tarball is available at ~/tap-airgapped-install-$TAP_VERSION.tar.gz"
+echo "--------------------------------------------------"
+
+
+echo ""
 echo "All done! Happy airgapping"
 echo "Contact my at @odedia"
 echo "--------------------------"

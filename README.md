@@ -4,6 +4,21 @@ This script will generate a tarball that you can move to an airgapped environmen
 
 This script should work well for both linux and macOS.
 
+This script should work well for both linux and macOS.
+
+The script downloads and generates the following dependencies:
+- Pivnet CLI
+- Tanzu CLI for all platforms
+- Tanzu CLI plugins as tarball for airgapped installation
+- Cluster essentials for all platforms
+- Cluster essentials image dependencies (with imgpkg)
+- TAP image dependencies (with imgpkg)
+- Build Service full dependencies
+- Grype with a working vulnerabilities database for airgapped environments
+- IDE plugins for Visual Studio, VS Code and InteliJ
+- Documentation as PDF
+- Tilt
+
 Before running the script, create a file in the following path:
 
 ```

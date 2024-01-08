@@ -14,6 +14,11 @@ else
     echo "~/.tap/tap-secrets file does not exist."
 fi
 
+echo ""
+echo "Removing old directories if any"
+echo "-------------------------------"
+
+rm -R -- */
 
 echo ""
 echo "Downloading PIVNET"
@@ -104,7 +109,7 @@ rm -rf $PWD/tanzu-cli/*
 mv $PWD/tanzu-cli-tmp/* $PWD/tanzu-cli/
 rm -rf tanzu-cli-tmp
 mv $PWD/tanzu-cli/* $PWD/tanzu-cli/tanzu
-chmod +x /tancu-cli/tanzu
+chmod +x /tancu-cli/*
 
 echo ""
 echo "Downloading Tanzu CLI Plugins"
@@ -119,6 +124,7 @@ echo "----------------------------------"
 mkdir -p cluster-essentials
 mkdir -p all-cluster-essentials
 
+$PIVNET accept-eula -p 'tanzu-cluster-essentials' -r $TAP_VERSION
 $PIVNET product-files -p 'tanzu-cluster-essentials' -r $CLUSTER_ESSENTIALS_VERSION > slugs.txt
 # Check if the OS is Mac or Linux
 if [[ "$OSTYPE" == "darwin"* ]]; then

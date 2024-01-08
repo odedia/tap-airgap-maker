@@ -124,7 +124,7 @@ echo "----------------------------------"
 mkdir -p cluster-essentials
 mkdir -p all-cluster-essentials
 
-$PIVNET accept-eula -p 'tanzu-cluster-essentials' -r $TAP_VERSION
+$PIVNET accept-eula -p 'tanzu-cluster-essentials' -r $CLUSTER_ESSENTIALS_VERSION
 $PIVNET product-files -p 'tanzu-cluster-essentials' -r $CLUSTER_ESSENTIALS_VERSION > slugs.txt
 # Check if the OS is Mac or Linux
 if [[ "$OSTYPE" == "darwin"* ]]; then

@@ -329,10 +329,10 @@ echo "----------------"
 
 mkdir -p tilt
 
-wget -P tilt "https://github.com/tilt-dev/tilt/releases/download/v0.33.10/tilt.$TILT_VERSION.linux.x86_64.tar.gz"
-wget -P tilt "https://github.com/tilt-dev/tilt/releases/download/v0.33.10/tilt.$TILT_VERSION.mac.arm64.tar.gz"
-wget -P tilt "https://github.com/tilt-dev/tilt/releases/download/v0.33.10/tilt.$TILT_VERSION.mac.x86_64.tar.gz"
-wget -P tilt "https://github.com/tilt-dev/tilt/releases/download/v0.33.10/tilt.$TILT_VERSION.windows.x86_64.zip"
+wget -P tilt "https://github.com/tilt-dev/tilt/releases/download/v$TILT_VERSION/tilt.$TILT_VERSION.linux.x86_64.tar.gz"
+wget -P tilt "https://github.com/tilt-dev/tilt/releases/download/v$TILT_VERSION/tilt.$TILT_VERSION.mac.arm64.tar.gz"
+wget -P tilt "https://github.com/tilt-dev/tilt/releases/download/v$TILT_VERSION/tilt.$TILT_VERSION.mac.x86_64.tar.gz"
+wget -P tilt "https://github.com/tilt-dev/tilt/releases/download/v$TILT_VERSION/tilt.$TILT_VERSION.windows.x86_64.zip"
 
 echo ""
 echo "Folder is created! Creating tarball"

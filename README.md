@@ -19,7 +19,7 @@ TAP_VERSION=1.7.2
 CLUSTER_ESSENTIALS_VERSION=1.7.2
 IMGPKG_REGISTRY_USERNAME=<enter your Tanzu Network username as email>
 IMGPKG_REGISTRY_PASSWORD=<enter your Tanzu Network password>
-PUSH_REGISTRY_WITH_PROJECT=<used to create a valid image for grype, only needed outside of airgapped envirnment. Format is my.example.registry.com/apps>
+PUSH_REGISTRY_WITH_PROJECT=<Format is my.example.registry.com/apps. Used for grype image creation, access to registry is only needed outside of airgapped environment. >
 GRYPE_FQDN=<FQDN that will eventually host the grype DB in the airgapped environment, such as grype.myintranet.local>
 TILT_VERSION=0.33.10
 ```

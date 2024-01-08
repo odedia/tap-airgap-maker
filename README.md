@@ -26,5 +26,6 @@ TILT_VERSION=0.33.10
 
 To create the tarball:
 
+```
 ./airgapme.sh
-
+```

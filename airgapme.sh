@@ -24,7 +24,7 @@ wget -P pivnet "https://github.com/pivotal-cf/pivnet-cli/releases/download/v$PIV
 wget -P pivnet "https://github.com/pivotal-cf/pivnet-cli/releases/download/v$PIVNET_VERSION/pivnet-darwin-arm64-4.1.1"
 wget -P pivnet "https://github.com/pivotal-cf/pivnet-cli/releases/download/v$PIVNET_VERSION/pivnet-linux-amd64-4.1.1"
 wget -P pivnet "https://github.com/pivotal-cf/pivnet-cli/releases/download/v$PIVNET_VERSION/pivnet-windows-amd64-4.1.1"
-
+chmod +x pivnet/*
 
 # Check if the OS is Mac or Linux
 if [[ "$OSTYPE" == "darwin"* ]]; then
@@ -104,6 +104,7 @@ rm -rf $PWD/tanzu-cli/*
 mv $PWD/tanzu-cli-tmp/* $PWD/tanzu-cli/
 rm -rf tanzu-cli-tmp
 mv $PWD/tanzu-cli/* $PWD/tanzu-cli/tanzu
+chmod +x /tancu-cli/tanzu
 
 echo ""
 echo "Downloading Tanzu CLI Plugins"
@@ -152,6 +153,7 @@ $PIVNET download-product-files -p 'tanzu-cluster-essentials' -r $TAP_VERSION -d 
 
 
 tar xvf cluster-essentials/*.tgz -C cluster-essentials
+chmod +x cluster-essentials/*
 rm cluster-essentials/*.tgz
 export CLUSTER_ESSENTIALS_IMAGE_SHA=$(grep "image:" cluster-essentials/tanzu-cluster-essentials-bundle-$CLUSTER_ESSENTIALS_VERSION.yml  | awk '{print $2}')
 cluster-essentials/imgpkg copy -b $CLUSTER_ESSENTIALS_IMAGE_SHA --to-tar cluster-essentials/cluster-essentials-bundle.tar --include-non-distributable-layers
@@ -311,7 +313,7 @@ echo "Downloading documentation PDF"
 echo "-----------------------------"
 
 export TAP_MAJOR_VERSION=${TAP_VERSION%.*}
-wget "https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/$TAP_MAJOR_VERSION/tap.pdf"
+wget -U "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" "https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/$TAP_MAJOR_VERSION/tap.pdf"
 
 echo ""
 echo "Downloading TILT"
@@ -325,10 +327,10 @@ wget -P tilt "https://github.com/tilt-dev/tilt/releases/download/v0.33.10/tilt.$
 wget -P tilt "https://github.com/tilt-dev/tilt/releases/download/v0.33.10/tilt.$TILT_VERSION.windows.x86_64.zip"
 
 echo ""
-echo "Folder is created! Zipping"
-echo "--------------------------"
+echo "Folder is created! Creating tarball"
+echo "-----------------------------------"
 
-tar -czf tap-airgapped-install-$TAP_VERSION.tar.gz .
+tar -czf ~/tap-airgapped-install-$TAP_VERSION.tar.gz .
 
 echo ""
 echo "All done! Happy airgapping"

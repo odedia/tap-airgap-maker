@@ -88,16 +88,16 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
     cpu_arch=$(uname -m)
     if [[ "$cpu_arch" == "arm64" ]]; then
         export TANZU_CLI_SLUG=$(grep 'tanzu-framework-bundle-mac-arm64' slugs.txt | awk -F'|' '{print $2}' | awk '{$1=$1};1')
-        export JQ_CLI="./jq/jq-macos-arm64"
+        export JQ_CLI="jq/jq-macos-arm64"
     else
         # Commands specific to Intel CPUs
         export TANZU_CLI_SLUG=$(grep 'tanzu-core-cli-mac' slugs.txt | awk -F'|' '{print $2}' | awk '{$1=$1};1')
-        export JQ_CLI="./jq/jq-macos-amd64"
+        export JQ_CLI="jq/jq-macos-amd64"
     fi
 elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
     # Linux specific commands
     export TANZU_CLI_SLUG=$(grep 'tanzu-core-cli-linux' slugs.txt | awk -F'|' '{print $2}' | awk '{$1=$1};1')
-    export JQ_CLI="./jq/jq-linux-amd64"
+    export JQ_CLI="jq/jq-linux-amd64"
 else
     echo "Unsupported OS"
     exit 1
@@ -209,11 +209,11 @@ rm listing.json
 wget https://toolbox-data.anchore.io/grype/databases/listing.json
 jq --arg v1 "$v1" '{ "available": { "1" : [.available."1"[0]] , "2" : [.available."2"[0]] , "3" : [.available."3"[0]] , "4" : [.available."4"[0]] , "5" : [.available."5"[0]]  } }' listing.json > listing.json.tmp
 mv listing.json.tmp listing.json
-wget $(cat listing.json | $JQ_CLI -r '.available."1"[0].url')
-wget $(cat listing.json | $JQ_CLI jq -r '.available."2"[0].url')
-wget $(cat listing.json | $JQ_CLI -r '.available."3"[0].url')
-wget $(cat listing.json | $JQ_CLI -r '.available."4"[0].url')
-wget $(cat listing.json | $JQ_CLI  -r '.available."5"[0].url')
+wget $(cat listing.json | ../$JQ_CLI -r '.available."1"[0].url')
+wget $(cat listing.json | ../$JQ_CLI -r '.available."2"[0].url')
+wget $(cat listing.json | ../$JQ_CLI -r '.available."3"[0].url')
+wget $(cat listing.json | ../$JQ_CLI -r '.available."4"[0].url')
+wget $(cat listing.json | ../$JQ_CLI -r '.available."5"[0].url')
 sed -i '' -e "s/https:\/\/toolbox-data.anchore.io\/grype\/databases/$ESCAPED_1/g" listing.json
 
 echo "FROM nginx:stable" > Dockerfile

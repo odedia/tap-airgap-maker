@@ -436,7 +436,7 @@ spinner() {
     local pid=$1
     local delay=0.1
     local spin='-\|/'
-    while ps -p $pid &> /dev/null; do
+    while ps -p $pid &>/dev/null; do
         printf "[%c] " "$spin"
         spin=${spin#?}${spin%???}
         sleep $delay
@@ -445,17 +445,19 @@ spinner() {
     printf "    \b\b\b\b"
 }
 
+# Run tar command in the background and capture its PID
+
+tar -cf ~/tap-airgapped-install-$TAP_VERSION.tar.gz . &>/dev/null &
+tar_pid=$!
+
 # Start spinning indicator in the background
-spinner $$ &
+spinner $tar_pid &
 
-# Run tar command and capture its PID
-tar -cf ~/tap-airgapped-install-$TAP_VERSION.tar.gz . &>/dev/null
-
-wait $!
+# Wait for the tar command to finish
+wait $tar_pid
 
 # Stop spinning indicator
 wait
-
 
 echo ""
 echo "Tarball is available at ~/tap-airgapped-install-$TAP_VERSION.tar.gz"

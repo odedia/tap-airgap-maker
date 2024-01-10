@@ -1,11 +1,11 @@
-TAP Airgap maker
+#TAP Airgap make
 
 This repo will generate a tarball that you can move to an airgapped environment with (hopefully) all required clis, dependencies and plugins.
 It will also allow you to run a script inside the airgapped environment to prepare everything for installation.
 
-This script should work well for both linux and macOS.
+## Airgapping Script
 
-This script should work well for both linux and macOS.
+This script should work well for both linux and macOS (Intel and Apple Silicon).
 
 The script downloads and generates the following dependencies:
 - Pivnet CLI
@@ -48,7 +48,9 @@ To create the tarball:
 ./airgapme.sh
 ```
 
-Then, after you moved the tarball to your airgapped environment somehow, you can prepare all that's needed to have a working TAP installation.
+## Running in the airgapped environment
+
+After you somehow moved the tarball to your airgapped environment, you can prepare all that's needed to have a working TAP installation.
 The airgapped install is *only* for Linux VMs since that's 99% of the use cases.
 The script should run as root.
 

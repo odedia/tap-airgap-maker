@@ -19,8 +19,6 @@ echo "Removing old directories if any"
 echo "-------------------------------"
 
 rm -Rf -- */
-rm -f tap.pdf
-rm -f *.html
 
 echo ""
 echo "Downloading PIVNET"
@@ -411,10 +409,12 @@ echo ""
 echo "Downloading documentation"
 echo "-------------------------"
 
+mkdir -p docs
+
 export TAP_MAJOR_VERSION=${TAP_VERSION%.*}
 export CLUSTER_ESSENTIALS_MAJOR_VERSION=${CLUSTER_ESSENTIALS_VERSION%.*}
-wget -U "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" "https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/$TAP_MAJOR_VERSION/tap.pdf"
-wget -O "cluster-essential-docs.html" -U "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" "https://docs.vmware.com/en/Cluster-Essentials-for-VMware-Tanzu/$CLUSTER_ESSENTIALS_MAJOR_VERSION/cluster-essentials/deploy.html"
+wget -O "docs/tap.pdf" -U "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" "https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/$TAP_MAJOR_VERSION/tap.pdf"
+wget -O "docs/cluster-essential-docs.html" -U "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" "https://docs.vmware.com/en/Cluster-Essentials-for-VMware-Tanzu/$CLUSTER_ESSENTIALS_MAJOR_VERSION/cluster-essentials/deploy.html"
 
 echo ""
 echo "Downloading TILT"

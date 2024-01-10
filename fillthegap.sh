@@ -16,7 +16,7 @@ fi
 
 # Check if the parameter is provided
 if [ $# -eq 0 ]; then
-    echo "Please provide the tar.gz as parameter to the script. Exiting."
+    echo "Please provide the path to the tar.gz as a parameter to the script. Exiting."
     exit 1
 else
     # If provided, use the provided parameter
@@ -24,7 +24,7 @@ else
 fi
 
 # Use the param variable for further operations
-echo "Parameter provided: $param"
+echo "Parameter provided: $tarball"
 
 docker login $INTERNAL_REGISTRY_FQDN -u $INTERNAL_REGISTRY_USERNAME -p $INTERNAL_REGISTRY_PASSWORD
 mkdir -p workspace
@@ -49,29 +49,32 @@ rm -rf workspace/tanzu-cli/v*
 mv workspace/tanzu-cli-tmp/* /usr/local/bin/tanzu
 rm -rf workspace/tanzu-cli-tmp
 chmod +x /usr/local/bin/tanzu
-cp jq/jq-linux-amd64 /usr/local/bin/jq
+cp workspace/jq/jq-linux-amd64 /usr/local/bin/jq
 
 echo ""
+echo "-----------------------------"
 echo "Installing Tanzu CLI Plugins"
 echo "-----------------------------"
 
-tanzu config cert add --host $INTERNAL_REGISTRY_FQDN --ca-certificate $INTERNAL_REGISTRY_PATH_TO_CERT
+tanzu config cert add --host $INTERNAL_REGISTRY_FQDN --ca-cert $INTERNAL_REGISTRY_PATH_TO_CERT
 tanzu plugin upload-bundle --tar workspace/tanzu-cli/plugins.tar --to-repo $INTERNAL_REGISTRY_WITH_PROJECT/plugin
 
 
 echo ""
+echo "-----------------------------------------------------"
 echo "Moving cluster essentials binaries to /usr/local/bin/"
-echo "-----------------------------------"
+echo "-----------------------------------------------------"
 
 rm -rf /tmp/cluster-essentials-tmp
 mkdir -p /tmp/cluster-essentials-tmp
-tar -xvf "all-cluster-essentials/tanzu-cluster-essentials-linux-amd64-$TAP_VERSION.tgz" -C /tmp/cluster-essentials-tmp
+tar -xvf "workspace/all-cluster-essentials/tanzu-cluster-essentials-linux-amd64-$TAP_VERSION.tgz" -C /tmp/cluster-essentials-tmp
 mv /tmp/cluster-essentials-tmp/imgpkg /usr/local/bin/imgpkg
 mv /tmp/cluster-essentials-tmp/kbld /usr/local/bin/kbld
 mv /tmp/cluster-essentials-tmp/kapp /usr/local/bin/kapp
 mv /tmp/cluster-essentials-tmp/ytt /usr/local/bin/ytt
 
 echo ""
+echo "-----------------------------------"
 echo "Uploading cluster-essentials images"
 echo "-----------------------------------"
 
@@ -80,40 +83,42 @@ export IMGPKG_REGISTRY_HOSTNAME=$INTERNAL_REGISTRY_FQDN
 export IMGPKG_REGISTRY_USERNAME=$INTERNAL_REGISTRY_USERNAME 
 export IMGPKG_REGISTRY_PASSWORD=$INTERNAL_REGISTRY_PASSWORD 
 
-./imgpkg copy \
-    --tar all-cluster-essentials/cluster-essentials-bundle.tar \
+imgpkg copy \
+    --tar workspace/all-cluster-essentials/cluster-essentials-bundle.tar \
     --to-repo $INTERNAL_REGISTRY_WITH_PROJECT/cluster-essentials-bundle \
     --include-non-distributable-layers \
     --registry-ca-cert-path $INTERNAL_REGISTRY_PATH_TO_CERT
 
-sha256_hash=$(<all-cluster-essentials/sha256_hash.txt)
+sha256_hash=$(<workspace/all-cluster-essentials/sha256_hash.txt)
 
-echo "" >flow.txt
+cat <<EOT > flow.txt
+Export your docker registry password as follows:
 
-cat <<EOT >> step1.txt
+export REGISTRY_PASSWORD=the-password
 
 To install Cluster Essentials on a cluster, make sure you point to the cluster with kubectl, then copy-paste the following command:
 
-INSTALL_BUNDLE=$INTERNAL_REGISTRY_WITH_PROJECT/$sha256_hash \
-  INSTALL_REGISTRY_HOSTNAME=$INTERNAL_REGISTRY_FQDN \
-  INSTALL_REGISTRY_USERNAME=$INTERNAL_REGISTRY_USERNAME \
-  INSTALL_REGISTRY_PASSWORD=$INTERNAL_REGISTRY_PASSWORD \
+INSTALL_BUNDLE=$INTERNAL_REGISTRY_WITH_PROJECT/$sha256_hash \\
+  INSTALL_REGISTRY_HOSTNAME=$INTERNAL_REGISTRY_FQDN \\
+  INSTALL_REGISTRY_USERNAME=$INTERNAL_REGISTRY_USERNAME \\
+  INSTALL_REGISTRY_PASSWORD=\$REGISTRY_PASSWORD \\
   ./install.sh
 
 EOT
 
 echo ""
+echo "-----------------------------"
 echo "Uploading TAP Package images"
 echo "-----------------------------"
 
 imgpkg copy \
-  --tar tap-dependencies/tap-packages-$TAP_VERSION.tar \
+  --tar workspace/tap-dependencies/tap-packages-$TAP_VERSION.tar \
   --to-repo $INTERNAL_REGISTRY_WITH_PROJECT/tap-packages \
   --include-non-distributable-layers \
   --registry-ca-cert-path $INTERNAL_REGISTRY_PATH_TO_CERT
 
 
-cat <<EOT >> step2.txt
+cat <<EOT >> flow.txt
 
 Create the tap-install namespace:
 
@@ -121,28 +126,28 @@ kubectl create ns tap-install
 
 Create the TAP registry secret:
 
-tanzu secret registry add tap-registry \
-    --server   $INTERNAL_REGISTRY_FQDN \
-    --username $INTERNAL_REGISTRY_USERNAME \
-    --password $INTERNAL_REGISTRY_PASSWORD \
-    --namespace tap-install \
-    --export-to-all-namespaces \
+tanzu secret registry add tap-registry \\
+    --server   $INTERNAL_REGISTRY_FQDN \\
+    --username $INTERNAL_REGISTRY_USERNAME \\
+    --password \$REGISTRY_PASSWORD \\
+    --namespace tap-install \\
+    --export-to-all-namespaces \\
     --yes
 
 Create the User registry (It's the same credentials but they don't have to be in some scenarios):
 
-tanzu secret registry add registry-credentials \
-    --server   $INTERNAL_REGISTRY_FQDN \
-    --username $INTERNAL_REGISTRY_USERNAME \
-    --password $INTERNAL_REGISTRY_PASSWORD \
-    --namespace tap-install \
-    --export-to-all-namespaces \
+tanzu secret registry add registry-credentials \\
+    --server   $INTERNAL_REGISTRY_FQDN \\
+    --username $INTERNAL_REGISTRY_USERNAME \\
+    --password \$REGISTRY_PASSWORD \\
+    --namespace tap-install \\
+    --export-to-all-namespaces \\
     --yes
 
 Add the package repository:
 
-tanzu package repository add tanzu-tap-repository \
-  --url $INTERNAL_REGISTRY_FQDN/tap-packages:$TAP_VERSION \
+tanzu package repository add tanzu-tap-repository \\
+  --url $INTERNAL_REGISTRY_FQDN/tap-packages:$TAP_VERSION \\
   --namespace tap-install
 
 Continue setting up the tap-values.yaml as per documentation. A sample yaml is in the available at tap-dependencies/sample-tap-values.yaml
@@ -152,19 +157,19 @@ tanzu package install tap -p tap.tanzu.vmware.com -v $TAP_VERSION --values-file 
 EOT
 
 echo ""
+echo "--------------------------------------"
 echo "Uploading Build Service Package images"
 echo "--------------------------------------"
 
-imgpkg copy --tar tap-dependencies/full-deps-package-repo.tar \
+imgpkg copy --tar workspace/tap-dependencies/full-deps-package-repo.tar \
   --to-repo=$INTERNAL_REGISTRY_WITH_PROJECT/full-deps-package-repo
 
-
-cat <<EOT >> step3.txt
+cat <<EOT >> flow.txt
 
 Add the full dependencies package repo:
 
-tanzu package repository add full-deps-package-repo \
-  --url $INTERNAL_REGISTRY_WITH_PROJECT/full-deps-package-repo:$TAP_VERSION \
+tanzu package repository add full-deps-package-repo \\
+  --url $INTERNAL_REGISTRY_WITH_PROJECT/full-deps-package-repo:$TAP_VERSION \\
   --namespace tap-install
 
 Then install the dependencies:
@@ -174,6 +179,7 @@ tanzu package install full-deps -p full-deps.buildservice.tanzu.vmware.com -v ">
 EOT
 
 echo ""
+echo "------------------"
 echo "Uploading Grype DB"
 echo "------------------"
 
@@ -182,7 +188,7 @@ docker tag $PUSH_REGISTRY_WITH_PROJECT/grype:latest $INTERNAL_REGISTRY_WITH_PROJ
 docker push $INTERNAL_REGISTRY_WITH_PROJECT/grype:latest
 
 
-cat <<EOT >> grype_httpproxy.yaml
+cat <<EOT > grype-httpproxy.yaml
 apiVersion: projectcontour.io/v1
 kind: HTTPProxy
 metadata:
@@ -196,7 +202,7 @@ spec:
           port: 8080
 EOT
 
-cat <<EOT >> grype-airgap-overlay.yaml
+cat <<EOT > grype-airgap-overlay.yaml
 apiVersion: v1
 kind: Secret
 metadata:
@@ -228,7 +234,7 @@ stringData:
 EOT
 
 
-cat <<EOT >> step4.txt
+cat <<EOT >> flow.txt
 Run the following command to create the grype deployment on the cluster:
 
 kubectl create deployment grype --image=$INTERNAL_REGISTRY_WITH_PROJECT/grype:latest --replicas=3
@@ -246,3 +252,9 @@ package_overlays:
       - name: "grype-airgap-overlay"
 EOT
 
+echo ""
+echo "----------------------------------------------"
+echo "All done! Happy airgapping"
+echo "Read TAP installation instructions in flow.txt"
+echo "Contact me at @odedia"
+echo "----------------------------------------------"

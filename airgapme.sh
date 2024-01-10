@@ -4,23 +4,28 @@ tap_secrets_file="$HOME/.tap/tap-secrets"
 
 # Check if the file exists
 if [[ -f "$tap_secrets_file" ]]; then
-    while IFS='=' read -r key value || [ -n "$key" ]; do
-        if [[ -n "$key" ]]; then
-            # Set each key-value pair as an environment variable
+
+    while IFS='=' read -r key value; do
+        # Ignore lines starting with # and empty lines
+        if [[ $key != \#* ]] && [ -n "$key" ]; then
+            # Export the key-value pair as environment variables
             export "$key"="$value"
         fi
     done < "$tap_secrets_file"
 else
     echo "~/.tap/tap-secrets file does not exist."
+    exit 1
 fi
 
 echo ""
+echo "-------------------------------"
 echo "Removing old directories if any"
 echo "-------------------------------"
 
 rm -Rf -- */
 
 echo ""
+echo "------------------"
 echo "Downloading PIVNET"
 echo "------------------"
 
@@ -57,8 +62,9 @@ fi
 chmod +x pivnet/*
 
 echo ""
+echo "--------------"
 echo "Downloading jq"
-echo "-----------------------------"
+echo "--------------"
 
 mkdir -p jq
 wget -P jq https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-linux-amd64
@@ -68,6 +74,7 @@ wget -P jq https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-macos-arm6
 chmod +x jq/*
 
 echo ""
+echo "---------------------------"
 echo "Logging in to Tanzu Network"
 echo "---------------------------"
 
@@ -75,6 +82,7 @@ $PIVNET login --api-token $PIVNET_TOKEN
 $PIVNET accept-eula -p 'tanzu-application-platform' -r $TAP_VERSION
 
 echo ""
+echo "----------------------"
 echo "Downloading Tanzu CLIs"
 echo "----------------------"
 
@@ -109,6 +117,7 @@ $PIVNET download-product-files -p 'tanzu-application-platform' -r $TAP_VERSION -
 $PIVNET download-product-files -p 'tanzu-application-platform' -r $TAP_VERSION -d all-tanzu-clis --product-file-id $(grep 'tanzu-core-cli-windows' slugs.txt | awk -F'|' '{print $2}' | awk '{$1=$1};1')
 
 echo ""
+echo "--------------------------------------"
 echo "Downloading Tanzu CLI for this machine"
 echo "--------------------------------------"
 
@@ -127,6 +136,7 @@ mv /tmp/tanzu-cli/* /tmp/tanzu-cli/tanzu
 chmod +x /tmp/tancu-cli/*
 
 echo ""
+echo "-----------------------------"
 echo "Downloading Tanzu CLI Plugins"
 echo "-----------------------------"
 
@@ -134,6 +144,7 @@ export TANZU_CLI="/tmp/tanzu-cli/tanzu"
 $TANZU_CLI plugin download-bundle --group vmware-tap/default --to-tar all-tanzu-clis/plugins.tar
 
 echo ""
+echo "----------------------------------"
 echo "Downloading all cluster-essentials"
 echo "----------------------------------"
 mkdir -p all-cluster-essentials
@@ -165,6 +176,7 @@ $PIVNET download-product-files -p 'tanzu-cluster-essentials' -r $TAP_VERSION -d 
 $PIVNET download-product-files -p 'tanzu-cluster-essentials' -r $TAP_VERSION -d all-cluster-essentials --product-file-id $(grep 'tanzu-cluster-essentials-windows' slugs.txt | awk -F'|' '{print $2}' | awk '{$1=$1};1')
 
 echo ""
+echo "-----------------------------------------------"
 echo "Downloading cluster-essentials for this machine"
 echo "-----------------------------------------------"
 
@@ -179,6 +191,7 @@ rm /tmp/cluster-essentials/*.tgz
 export CLUSTER_ESSENTIALS_IMAGE_SHA=$(grep "image:" /tmp/cluster-essentials/tanzu-cluster-essentials-bundle-$CLUSTER_ESSENTIALS_VERSION.yml  | awk '{print $2}')
 
 echo ""
+echo "------------------------------"
 echo "Taking note of the sha256 hash"
 echo "------------------------------"
 
@@ -190,6 +203,7 @@ export sha256_hash=$(echo "$CLUSTER_ESSENTIALS_IMAGE_SHA" | grep -oE "sha256:[0-
 echo $CLUSTER_ESSENTIALS_IMAGE_SHA > all-cluster-essentials/sha256_hash.txt
 
 echo ""
+echo "----------------------------"
 echo "Downloading TAP dependencies"
 echo "----------------------------"
 
@@ -311,12 +325,14 @@ EOT
 
 
 echo ""
+echo "--------------------------------------"
 echo "Downloading Build Service dependencies"
 echo "--------------------------------------"
 /tmp/cluster-essentials/imgpkg copy -b registry.tanzu.vmware.com/tanzu-application-platform/full-deps-package-repo:$TAP_VERSION \
   --to-tar=tap-dependencies/full-deps-package-repo.tar
 
 echo ""
+echo "--------------------"
 echo "Making Grype with DB"
 echo "--------------------"
 
@@ -388,6 +404,7 @@ EOT
 cd ..
 
 echo ""
+echo "-----------------------"
 echo "Downloading IDE Plugins"
 echo "-----------------------"
 mkdir -p ide-plugins
@@ -406,6 +423,7 @@ rm slugs.txt
 rm slugs.json
 
 echo ""
+echo "-------------------------"
 echo "Downloading documentation"
 echo "-------------------------"
 
@@ -417,6 +435,7 @@ wget -O "docs/tap.pdf" -U "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Apple
 wget -O "docs/cluster-essential-docs.html" -U "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" "https://docs.vmware.com/en/Cluster-Essentials-for-VMware-Tanzu/$CLUSTER_ESSENTIALS_MAJOR_VERSION/cluster-essentials/deploy.html"
 
 echo ""
+echo "----------------"
 echo "Downloading TILT"
 echo "----------------"
 
@@ -428,6 +447,7 @@ wget -P tilt "https://github.com/tilt-dev/tilt/releases/download/v$TILT_VERSION/
 wget -P tilt "https://github.com/tilt-dev/tilt/releases/download/v$TILT_VERSION/tilt.$TILT_VERSION.windows.x86_64.zip"
 
 echo ""
+echo "-----------------------------------"
 echo "Folder is created! Creating tarball"
 echo "-----------------------------------"
 
@@ -447,7 +467,7 @@ spinner() {
 
 # Run tar command in the background and capture its PID
 
-tar -cf ~/tap-airgapped-install-$TAP_VERSION.tar.gz . &>/dev/null &
+tar -cf ~/tap-airgapped-install-$TAP_VERSION.tar.gz --exclude=.git . &>/dev/null &
 tar_pid=$!
 
 # Start spinning indicator in the background
@@ -460,11 +480,13 @@ wait $tar_pid
 wait
 
 echo ""
+echo "------------------------------------------------------"
 echo "Tarball is available at ~/tap-airgapped-install-$TAP_VERSION.tar.gz"
-echo "--------------------------------------------------"
+echo "------------------------------------------------------"
 
 
 echo ""
+echo "--------------------------"
 echo "All done! Happy airgapping"
 echo "Contact my at @odedia"
 echo "--------------------------"

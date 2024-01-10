@@ -196,7 +196,7 @@ echo "Downloading TAP dependencies"
 echo "----------------------------"
 
 mkdir -p tap-dependencies
-cluster-essentials/imgpkg copy \
+/tmp/cluster-essentials/imgpkg copy \
   -b registry.tanzu.vmware.com/tanzu-application-platform/tap-packages:$TAP_VERSION \
   --to-tar tap-dependencies/tap-packages-$TAP_VERSION.tar \
   --include-non-distributable-layers
@@ -315,7 +315,7 @@ EOT
 echo ""
 echo "Downloading Build Service dependencies"
 echo "--------------------------------------"
-cluster-essentials/imgpkg copy -b registry.tanzu.vmware.com/tanzu-application-platform/full-deps-package-repo:$TAP_VERSION \
+/tmp/cluster-essentials/imgpkg copy -b registry.tanzu.vmware.com/tanzu-application-platform/full-deps-package-repo:$TAP_VERSION \
   --to-tar=tap-dependencies/full-deps-package-repo.tar
 
 echo ""

@@ -43,7 +43,7 @@ TILT_VERSION=0.33.10
 ```
 `PUSH_REGISTRY_WITH_PROJECT` is simply any docker registry that can temporarily host a docker image, it can even be dockerhub. We just need this because the script can run on M1 Macs, so we much build with the `docker buildx` command that for some reason fails to output a working docker image as a tarball (at least on my machine). So, the alternative is to push the image to a registry and then pull it locally again. Ofcourse - access to the registry is *not* needed inside of airgapped environment.
 
-`GRYPE_FQDN` is the FQDN that will eventually host the grype DB server inside the airgapped environment, such as grype.myintranet.local. If that URL is sensitive, you can set a dummy value here and edit the files manually in the airgapped environment, but that means you'll have to also rebuild the image inside the intranet, which means tweaking the Dockerfile a bit.
+`GRYPE_FQDN` is the FQDN that will eventually host the grype DB server inside the airgapped environment, such as grype.myintranet.local. If that URL is sensitive, you can set a dummy value here and edit the files manually in the airgapped environment, but that means you'll have to also rebuild the image inside the airgapped environment, which means tweaking the Dockerfile a bit.
 
 To create the tarball:
 

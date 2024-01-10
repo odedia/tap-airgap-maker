@@ -28,7 +28,6 @@ docker login registry.tanzu.vmware.com -u $IMGPKG_REGISTRY_USERNAME -p $IMGPKG_R
 
 mkdir -p pivnet
 wget -P pivnet "https://github.com/pivotal-cf/pivnet-cli/releases/download/v$PIVNET_VERSION/pivnet-windows-amd64-4.1.1"
-chmod +x pivnet/*
 
 # Check if the OS is Mac or Linux
 if [[ "$OSTYPE" == "darwin"* ]]; then
@@ -55,6 +54,8 @@ else
     echo "Unsupported OS"
     exit 1
 fi
+
+chmod +x pivnet/*
 
 echo ""
 echo "Downloading jq"

@@ -19,6 +19,8 @@ echo "Removing old directories if any"
 echo "-------------------------------"
 
 rm -R -- */
+rm -f tap.pdf
+rm -f *.html
 
 echo ""
 echo "Downloading PIVNET"
@@ -177,7 +179,17 @@ tar xvf /tmp/cluster-essentials/*.tgz -C /tmp/cluster-essentials
 chmod +x /tmp/cluster-essentials/*
 rm /tmp/cluster-essentials/*.tgz
 export CLUSTER_ESSENTIALS_IMAGE_SHA=$(grep "image:" /tmp/cluster-essentials/tanzu-cluster-essentials-bundle-$CLUSTER_ESSENTIALS_VERSION.yml  | awk '{print $2}')
+
+echo ""
+echo "Taking note of the sha256 hash"
+echo "------------------------------"
+
+
+export sha256_hash=$(echo "$CLUSTER_ESSENTIALS_IMAGE_SHA" | grep -oE "sha256:[0-9a-fA-F]{64}")
+
 /tmp/cluster-essentials/imgpkg copy -b $CLUSTER_ESSENTIALS_IMAGE_SHA --to-tar all-cluster-essentials/cluster-essentials-bundle.tar --include-non-distributable-layers
+
+echo $CLUSTER_ESSENTIALS_IMAGE_SHA > all-cluster-essentials/sha256_hash.txt
 
 echo ""
 echo "Downloading TAP dependencies"
@@ -188,6 +200,117 @@ cluster-essentials/imgpkg copy \
   -b registry.tanzu.vmware.com/tanzu-application-platform/tap-packages:$TAP_VERSION \
   --to-tar tap-dependencies/tap-packages-$TAP_VERSION.tar \
   --include-non-distributable-layers
+
+cat <<EOT >> tap-dependencies/sample-tap-values.yaml
+shared:
+  ingress_domain: "INGRESS-DOMAIN"
+  image_registry:
+    project_path: "SERVER-NAME/REPO-NAME"
+    secret:
+      name: "KP-DEFAULT-REPO-SECRET"
+      namespace: "KP-DEFAULT-REPO-SECRET-NAMESPACE"
+  ca_cert_data: |
+    -----BEGIN CERTIFICATE-----
+    MIIFXzCCA0egAwIBAgIJAJYm37SFocjlMA0GCSqGSIb3DQEBDQUAMEY...
+    -----END CERTIFICATE-----
+profile: full
+ceip_policy_disclosed: true
+buildservice:
+  kp_default_repository: "KP-DEFAULT-REPO"
+  kp_default_repository_secret: # Takes the value from the shared section by default, but can be overridden by setting a different value.
+    name: "KP-DEFAULT-REPO-SECRET"
+    namespace: "KP-DEFAULT-REPO-SECRET-NAMESPACE"
+  exclude_dependencies: true
+supply_chain: basic
+contour:
+  infrastructure_provider: aws
+  envoy:
+    service:
+      type: LoadBalancer
+      annotations:
+      # This annotation is for air-gapped AWS only.
+          service.kubernetes.io/aws-load-balancer-internal: "true"
+
+ootb_supply_chain_basic:
+  registry:
+      server: "SERVER-NAME" # Takes the value from the shared section by default, but can be overridden by setting a different value.
+      repository: "REPO-NAME" # Takes the value from the shared section by default, but can be overridden by setting a different value.
+  gitops:
+      ssh_secret: "SSH-SECRET"
+  maven:
+      repository:
+         url: https://MAVEN-URL
+         secret_name: "MAVEN-CREDENTIALS"
+
+accelerator:
+  ingress:
+    include: true
+    enable_tls: false
+  git_credentials:
+    secret_name: git-credentials
+    username: GITLAB-USER
+    password: GITLAB-PASSWORD
+
+appliveview:
+  ingressEnabled: true
+
+appliveview_connector:
+  backend:
+    ingressEnabled: true
+    sslDeactivated: false
+    host: appliveview.INGRESS-DOMAIN
+    caCertData: |-
+      -----BEGIN CERTIFICATE-----
+      MIIGMzCCBBugAwIBAgIJALHHzQjxM6wMMA0GCSqGSIb3DQEBDQUAMGcxCzAJBgNV
+      BAgMAk1OMRQwEgYDVQQHDAtNaW5uZWFwb2xpczEPMA0GA1UECgwGVk13YXJlMRMw
+      -----END CERTIFICATE-----
+
+local_source_proxy:
+  # Takes the value from the project_path under the image_registry section of shared by default, but can be overridden by setting a different value.
+  repository: "EXTERNAL-REGISTRY-FOR-LOCAL-SOURCE"
+  push_secret:
+    # When set to true, the secret mentioned in this section is automatically exported to Local Source Proxy's namespace.
+    name: "EXTERNAL-REGISTRY-FOR-LOCAL-SOURCE-SECRET"
+    namespace: "EXTERNAL-REGISTRY-FOR-LOCAL-SOURCE-SECRET-NAMESPACE"
+    # When set to true, the secret mentioned in this section is automatically exported to Local Source Proxy's namespace.
+    create_export: true
+
+tap_gui:
+  app_config:
+    auth:
+      allowGuestAccess: true  # This allows unauthenticated users to log in to your portal. If you want to deactivate it, make sure you configure an alternative auth provider.
+    kubernetes:
+      serviceLocatorMethod:
+        type: multiTenant
+      clusterLocatorMethods:
+        - type: config
+          clusters:
+            - url: https://{KUBERNETES_SERVICE_HOST}:{KUBERNETES_SERVICE_PORT}
+              name: host
+              authProvider: serviceAccount
+              serviceAccountToken: {KUBERNETES_SERVICE_ACCOUNT_TOKEN}
+              skipTLSVerify: false
+              caData: B64_ENCODED_CA
+    catalog:
+      locations:
+        - type: url
+          target: https://GIT-CATALOG-URL/catalog-info.yaml
+    #Example Integration for custom GitLab:
+    integrations:
+      gitlab:
+        - host: GITLAB-URL
+          token: GITLAB-TOKEN
+          apiBaseUrl: https://GITLABURL/api/v4/
+    backend:
+      reading:
+        allow:
+          - host: GITLAB-URL # Example URL: gitlab.example.com
+
+metadata_store:
+  ns_for_export_app_cert: "MY-DEV-NAMESPACE"
+  app_service_type: ClusterIP # Defaults to LoadBalancer. If shared.ingress_domain is set earlier, this must be set to ClusterIP.
+EOT
+
 
 echo ""
 echo "Downloading Build Service dependencies"
@@ -245,52 +368,6 @@ rm -f httpproxy.yaml || true
 rm -f grype-airgap-overlay.yaml || true
 rm -f flow.txt || true
 
-cat <<EOT >> httpproxy.yaml
-apiVersion: projectcontour.io/v1
-kind: HTTPProxy
-metadata:
-  name: grype-ingress
-spec:
-  virtualhost:
-    fqdn: $GRYPE_FQDN
-  routes:
-    - services:
-        - name: grype
-          port: 8080
-EOT
-
-cat <<EOT >> grype-airgap-overlay.yaml
-apiVersion: v1
-kind: Secret
-metadata:
-  name: grype-airgap-overlay
-  namespace: tap-install #! namespace where tap is installed
-stringData:
-  patch.yaml: |
-    #@ load("@ytt:overlay", "overlay")
-
-    #@overlay/match by=overlay.subset({"kind":"ScanTemplate","metadata":{"namespace":"demos"}}),expects="1+"
-    #! developer namespace you are using
-    ---
-    spec:
-      template:
-        initContainers:
-          #@overlay/match by=overlay.subset({"name": "scan-plugin"}), expects="0+"
-          - name: scan-plugin
-            #@overlay/match missing_ok=True
-            env:
-              #@overlay/append
-              - name: GRYPE_CHECK_FOR_APP_UPDATE
-                value: "false"
-              - name: GRYPE_DB_AUTO_UPDATE
-                value: "false"
-              - name: GRYPE_DB_UPDATE_URL
-                value: http://$GRYPE_FQDN/listing.json
-              - name: GRYPE_DB_MAX_ALLOWED_BUILT_AGE #! see note on best practices
-                value: "8760h"
-EOT
-
-
 cat <<EOT >> flow.txt
 In the airgapped environment, run:
 
@@ -335,7 +412,9 @@ echo "Downloading documentation PDF"
 echo "-----------------------------"
 
 export TAP_MAJOR_VERSION=${TAP_VERSION%.*}
+export CLUSTER_ESSENTIALS_MAJOR_VERSION=${CLUSTER_ESSENTIALS_VERSION%.*}
 wget -U "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" "https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/$TAP_MAJOR_VERSION/tap.pdf"
+wget -U "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" "https://docs.vmware.com/en/Cluster-Essentials-for-VMware-Tanzu/$CLUSTER_ESSENTIALS_MAJOR_VERSION/cluster-essentials/deploy.html"
 
 echo ""
 echo "Downloading TILT"

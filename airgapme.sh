@@ -65,7 +65,7 @@ wget -P jq https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-linux-amd6
 wget -P jq https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-windows-amd64.exe
 wget -P jq https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-macos-amd64
 wget -P jq https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-macos-arm64
-
+chmod +x jq/*
 
 echo ""
 echo "Logging in to Tanzu Network"

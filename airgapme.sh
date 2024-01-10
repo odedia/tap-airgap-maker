@@ -27,10 +27,6 @@ echo "------------------"
 docker login registry.tanzu.vmware.com -u $IMGPKG_REGISTRY_USERNAME -p $IMGPKG_REGISTRY_PASSWORD
 
 mkdir -p pivnet
-wget -P pivnet "https://github.com/pivotal-cf/pivnet-cli/releases/download/v$PIVNET_VERSION/pivnet-darwin-amd64-4.1.1"
-wget -P pivnet "https://github.com/pivotal-cf/pivnet-cli/releases/download/v$PIVNET_VERSION/pivnet-darwin-arm64-4.1.1"
-wget -P pivnet "https://github.com/pivotal-cf/pivnet-cli/releases/download/v$PIVNET_VERSION/pivnet-linux-amd64-4.1.1"
-wget -P pivnet "https://github.com/pivotal-cf/pivnet-cli/releases/download/v$PIVNET_VERSION/pivnet-windows-amd64-4.1.1"
 chmod +x pivnet/*
 
 # Check if the OS is Mac or Linux
@@ -40,15 +36,18 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
     cpu_arch=$(uname -m)
     if [[ "$cpu_arch" == "arm64" ]]; then
         echo "Apple Silicon (M1)"
+        wget -P pivnet "https://github.com/pivotal-cf/pivnet-cli/releases/download/v$PIVNET_VERSION/pivnet-darwin-arm64-4.1.1"
         export PIVNET="$PWD/pivnet/pivnet-darwin-arm64-4.1.1"
     else
         echo "Intel"
         # Commands specific to Intel CPUs
+        wget -P pivnet "https://github.com/pivotal-cf/pivnet-cli/releases/download/v$PIVNET_VERSION/pivnet-darwin-amd64-4.1.1"
         export PIVNET=$PWD/pivnet/pivnet-darwin-amd64-4.1.1
     fi
 elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
     echo "Running on Linux"
     # Linux specific commands
+    wget -P pivnet "https://github.com/pivotal-cf/pivnet-cli/releases/download/v$PIVNET_VERSION/pivnet-linux-amd64-4.1.1"
     export PIVNET=$PWD/pivnet/pivnet-linux-amd64-4.1.1
 else
     echo "Unsupported OS"

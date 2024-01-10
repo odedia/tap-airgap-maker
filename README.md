@@ -1,4 +1,4 @@
-#TAP Airgap make
+# TAP Airgap make
 
 This repo will generate a tarball that you can move to an airgapped environment with (hopefully) all required clis, dependencies and plugins.
 It will also allow you to run a script inside the airgapped environment to prepare everything for installation.

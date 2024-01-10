@@ -18,7 +18,7 @@ echo ""
 echo "Removing old directories if any"
 echo "-------------------------------"
 
-rm -R -- */
+rm -Rf -- */
 rm -f tap.pdf
 rm -f *.html
 

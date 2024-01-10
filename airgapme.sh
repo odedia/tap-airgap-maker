@@ -27,6 +27,7 @@ echo "------------------"
 docker login registry.tanzu.vmware.com -u $IMGPKG_REGISTRY_USERNAME -p $IMGPKG_REGISTRY_PASSWORD
 
 mkdir -p pivnet
+wget -P pivnet "https://github.com/pivotal-cf/pivnet-cli/releases/download/v$PIVNET_VERSION/pivnet-windows-amd64-4.1.1"
 chmod +x pivnet/*
 
 # Check if the OS is Mac or Linux
@@ -48,11 +49,22 @@ elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
     echo "Running on Linux"
     # Linux specific commands
     wget -P pivnet "https://github.com/pivotal-cf/pivnet-cli/releases/download/v$PIVNET_VERSION/pivnet-linux-amd64-4.1.1"
+
     export PIVNET=$PWD/pivnet/pivnet-linux-amd64-4.1.1
 else
     echo "Unsupported OS"
     exit 1
 fi
+
+echo ""
+echo "Downloading jq"
+echo "-----------------------------"
+
+mkdir -p jq
+wget -P jq https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-linux-amd64
+wget -P jq https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-windows-amd64.exe
+wget -P jq https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-macos-amd64
+wget -P jq https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-macos-arm64
 
 
 echo ""
@@ -120,16 +132,6 @@ echo "-----------------------------"
 
 export TANZU_CLI="/tmp/tanzu-cli/tanzu"
 $TANZU_CLI plugin download-bundle --group vmware-tap/default --to-tar all-tanzu-clis/plugins.tar
-
-echo ""
-echo "Downloading jq"
-echo "-----------------------------"
-
-mkdir -p jq
-wget -P jq https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-linux-amd64
-wget -P jq https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-windows-amd64.exe
-wget -P jq https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-macos-amd64
-wget -P jq https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-macos-arm64
 
 echo ""
 echo "Downloading all cluster-essentials"

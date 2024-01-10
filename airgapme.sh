@@ -27,7 +27,6 @@ echo "------------------"
 docker login registry.tanzu.vmware.com -u $IMGPKG_REGISTRY_USERNAME -p $IMGPKG_REGISTRY_PASSWORD
 
 mkdir -p pivnet
-wget -P pivnet "https://github.com/pivotal-cf/pivnet-cli/releases/download/v$PIVNET_VERSION/pivnet-windows-amd64-4.1.1"
 
 # Check if the OS is Mac or Linux
 if [[ "$OSTYPE" == "darwin"* ]]; then
@@ -237,6 +236,7 @@ done
 echo "STOPSIGNAL SIGQUIT" >> Dockerfile
 echo 'CMD ["nginx", "-g", "daemon off;"]' >> Dockerfile
 
+docker login $PUSH_REGISTRY_FQDN -u $PUSH_REGISTRY_USERNAME -p $PUSH_REGISTRY_PASSWORD
 docker buildx build --push --platform linux/amd64 -t "$PUSH_REGISTRY_WITH_PROJECT/grype:latest" . 
 docker pull "$PUSH_REGISTRY_WITH_PROJECT/grype:latest"
 docker save -o grype-with-db.tar "$PUSH_REGISTRY_WITH_PROJECT/grype:latest"

@@ -1,7 +1,9 @@
 # TAP Airgap Maker
 
-This repo will generate a tarball that you can move to an airgapped environment with (hopefully) all required clis, dependencies and plugins.
+This repo will generate a tarball with Tanzu Application Platform that you can move to an airgapped environment with (hopefully) all required clis, dependencies and plugins.
 It will also allow you to run a script inside the airgapped environment to prepare everything for installation.
+
+Disclaimer: for educational purposes only, not a supported Tanzu solution.
 
 ## Airgapping Script
 

@@ -67,7 +67,6 @@ echo ""
 echo "Downloading Tanzu CLIs"
 echo "----------------------"
 
-mkdir -p tanzu-cli
 mkdir -p all-tanzu-clis
 
 $PIVNET product-files -p 'tanzu-application-platform' -r $TAP_VERSION > slugs.txt
@@ -78,13 +77,16 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
     cpu_arch=$(uname -m)
     if [[ "$cpu_arch" == "arm64" ]]; then
         export TANZU_CLI_SLUG=$(grep 'tanzu-framework-bundle-mac-arm64' slugs.txt | awk -F'|' '{print $2}' | awk '{$1=$1};1')
+        export JQ_CLI="./jq/jq-macos-arm64"
     else
         # Commands specific to Intel CPUs
         export TANZU_CLI_SLUG=$(grep 'tanzu-core-cli-mac' slugs.txt | awk -F'|' '{print $2}' | awk '{$1=$1};1')
+        export JQ_CLI="./jq/jq-macos-amd64"
     fi
 elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
     # Linux specific commands
     export TANZU_CLI_SLUG=$(grep 'tanzu-core-cli-linux' slugs.txt | awk -F'|' '{print $2}' | awk '{$1=$1};1')
+    export JQ_CLI="./jq/jq-linux-amd64"
 else
     echo "Unsupported OS"
     exit 1
@@ -99,31 +101,40 @@ echo ""
 echo "Downloading Tanzu CLI for this machine"
 echo "--------------------------------------"
 
-$PIVNET download-product-files -p 'tanzu-application-platform' -r $TAP_VERSION -d tanzu-cli --product-file-id $TANZU_CLI_SLUG
+mkdir -p /tmp/tanzu-cli
+$PIVNET download-product-files -p 'tanzu-application-platform' -r $TAP_VERSION -d /tmp/tanzu-cli --product-file-id $TANZU_CLI_SLUG
 
 
-tar xvf tanzu-cli/*.tar.gz -C tanzu-cli
-rm -f tanzu-cli/*.tar.gz
-mkdir -p tanzu-cli-tmp
-mkdir -p tanzu-cli
-find ./tanzu-cli -type f -name "tanzu-cli*" -exec mv {} $PWD/tanzu-cli-tmp/ \;
-rm -rf $PWD/tanzu-cli/*
-mv $PWD/tanzu-cli-tmp/* $PWD/tanzu-cli/
-rm -rf tanzu-cli-tmp
-mv $PWD/tanzu-cli/* $PWD/tanzu-cli/tanzu
-chmod +x /tancu-cli/*
+tar xvf /tmp/tanzu-cli/*.tar.gz -C /tmp/tanzu-cli
+rm -f /tmp/tanzu-cli/*.tar.gz
+mkdir -p /tmp/tanzu-cli-tmp
+find /tmp/tanzu-cli -type f -name "tanzu-cli*" -exec mv {} /tmp/tanzu-cli-tmp/ \;
+rm -rf /tmp/tanzu-cli/*
+mv /tmp/tanzu-cli-tmp/* /tmp/tanzu-cli/
+rm -rf /tmp/tanzu-cli-tmp
+mv /tmp/tanzu-cli/* /tmp/tanzu-cli/tanzu
+chmod +x /tmp/tancu-cli/*
 
 echo ""
 echo "Downloading Tanzu CLI Plugins"
 echo "-----------------------------"
 
-export TANZU_CLI="$PWD/tanzu-cli/tanzu"
-$TANZU_CLI plugin download-bundle --group vmware-tap/default --to-tar tanzu-cli/plugins.tar
+export TANZU_CLI="/tmp/tanzu-cli/tanzu"
+$TANZU_CLI plugin download-bundle --group vmware-tap/default --to-tar all-tanzu-clis/plugins.tar
+
+echo ""
+echo "Downloading jq"
+echo "-----------------------------"
+
+mkdir -p jq
+wget -P jq https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-linux-amd64
+wget -P jq https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-windows-amd64.exe
+wget -P jq https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-macos-amd64
+wget -P jq https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-macos-arm64
 
 echo ""
 echo "Downloading all cluster-essentials"
 echo "----------------------------------"
-mkdir -p cluster-essentials
 mkdir -p all-cluster-essentials
 
 $PIVNET accept-eula -p 'tanzu-cluster-essentials' -r $CLUSTER_ESSENTIALS_VERSION
@@ -156,15 +167,16 @@ echo ""
 echo "Downloading cluster-essentials for this machine"
 echo "-----------------------------------------------"
 
-$PIVNET download-product-files -p 'tanzu-cluster-essentials' -r $TAP_VERSION -d cluster-essentials --product-file-id $CLUSTER_ESSENTIALS_SLUG
-$PIVNET download-product-files -p 'tanzu-cluster-essentials' -r $TAP_VERSION -d cluster-essentials --product-file-id $CLUSTER_ESSENTIALS_YAML_SLUG
+mkdir -p /tmp/cluster-essentials
+$PIVNET download-product-files -p 'tanzu-cluster-essentials' -r $TAP_VERSION -d /tmp/cluster-essentials --product-file-id $CLUSTER_ESSENTIALS_SLUG
+$PIVNET download-product-files -p 'tanzu-cluster-essentials' -r $TAP_VERSION -d /tmp/cluster-essentials --product-file-id $CLUSTER_ESSENTIALS_YAML_SLUG
 
 
-tar xvf cluster-essentials/*.tgz -C cluster-essentials
-chmod +x cluster-essentials/*
-rm cluster-essentials/*.tgz
-export CLUSTER_ESSENTIALS_IMAGE_SHA=$(grep "image:" cluster-essentials/tanzu-cluster-essentials-bundle-$CLUSTER_ESSENTIALS_VERSION.yml  | awk '{print $2}')
-cluster-essentials/imgpkg copy -b $CLUSTER_ESSENTIALS_IMAGE_SHA --to-tar cluster-essentials/cluster-essentials-bundle.tar --include-non-distributable-layers
+tar xvf /tmp/cluster-essentials/*.tgz -C /tmp/cluster-essentials
+chmod +x /tmp/cluster-essentials/*
+rm /tmp/cluster-essentials/*.tgz
+export CLUSTER_ESSENTIALS_IMAGE_SHA=$(grep "image:" /tmp/cluster-essentials/tanzu-cluster-essentials-bundle-$CLUSTER_ESSENTIALS_VERSION.yml  | awk '{print $2}')
+/tmp/cluster-essentials/imgpkg copy -b $CLUSTER_ESSENTIALS_IMAGE_SHA --to-tar all-cluster-essentials/cluster-essentials-bundle.tar --include-non-distributable-layers
 
 echo ""
 echo "Downloading TAP dependencies"
@@ -196,11 +208,11 @@ rm listing.json
 wget https://toolbox-data.anchore.io/grype/databases/listing.json
 jq --arg v1 "$v1" '{ "available": { "1" : [.available."1"[0]] , "2" : [.available."2"[0]] , "3" : [.available."3"[0]] , "4" : [.available."4"[0]] , "5" : [.available."5"[0]]  } }' listing.json > listing.json.tmp
 mv listing.json.tmp listing.json
-wget $(cat listing.json |jq -r '.available."1"[0].url')
-wget $(cat listing.json |jq -r '.available."2"[0].url')
-wget $(cat listing.json |jq -r '.available."3"[0].url')
-wget $(cat listing.json |jq -r '.available."4"[0].url')
-wget $(cat listing.json |jq -r '.available."5"[0].url')
+wget $(cat listing.json | $JQ_CLI -r '.available."1"[0].url')
+wget $(cat listing.json | $JQ_CLI jq -r '.available."2"[0].url')
+wget $(cat listing.json | $JQ_CLI -r '.available."3"[0].url')
+wget $(cat listing.json | $JQ_CLI -r '.available."4"[0].url')
+wget $(cat listing.json | $JQ_CLI  -r '.available."5"[0].url')
 sed -i '' -e "s/https:\/\/toolbox-data.anchore.io\/grype\/databases/$ESCAPED_1/g" listing.json
 
 echo "FROM nginx:stable" > Dockerfile
@@ -304,14 +316,14 @@ echo "-----------------------"
 mkdir -p ide-plugins
 
 $PIVNET product-files -p 'tanzu-application-platform' -r $TAP_VERSION --format json > slugs.json
-$PIVNET download-product-files -p 'tanzu-application-platform' -r $TAP_VERSION -d ide-plugins --product-file-id $(jq '.[] | select(.name == "Tanzu Developer Tools for Visual Studio") | .id' slugs.json)
-$PIVNET download-product-files -p 'tanzu-application-platform' -r $TAP_VERSION -d ide-plugins --product-file-id $(jq '.[] | select(.name == "Tanzu GitOps Reference Implementation") | .id' slugs.json)
-$PIVNET download-product-files -p 'tanzu-application-platform' -r $TAP_VERSION -d ide-plugins --product-file-id $(jq '.[] | select(.name == "Tanzu App Accelerator Extension for Intellij") | .id' slugs.json)
-$PIVNET download-product-files -p 'tanzu-application-platform' -r $TAP_VERSION -d ide-plugins --product-file-id $(jq '.[] | select(.name == "Tanzu App Accelerator Extension for Visual Studio Code") | .id' slugs.json)
-$PIVNET download-product-files -p 'tanzu-application-platform' -r $TAP_VERSION -d ide-plugins --product-file-id $(jq '.[] | select(.name == "Tanzu Developer Tools for Visual Studio Code") | .id' slugs.json)
-$PIVNET download-product-files -p 'tanzu-application-platform' -r $TAP_VERSION -d ide-plugins --product-file-id $(jq '.[] | select(.name == "Tanzu Developer Tools for Intellij") | .id' slugs.json)
-$PIVNET download-product-files -p 'tanzu-application-platform' -r $TAP_VERSION -d ide-plugins --product-file-id $(jq '.[] | select(.name == "Tanzu Application Platform Developer Portal Blank Catalog") | .id' slugs.json)
-$PIVNET download-product-files -p 'tanzu-application-platform' -r $TAP_VERSION -d ide-plugins --product-file-id $(jq '.[] | select(.name == "Tanzu Application Platform Developer Portal Yelb Catalog") | .id' slugs.json)
+$PIVNET download-product-files -p 'tanzu-application-platform' -r $TAP_VERSION -d ide-plugins --product-file-id $($JQ_CLI '.[] | select(.name == "Tanzu Developer Tools for Visual Studio") | .id' slugs.json)
+$PIVNET download-product-files -p 'tanzu-application-platform' -r $TAP_VERSION -d ide-plugins --product-file-id $($JQ_CLI '.[] | select(.name == "Tanzu GitOps Reference Implementation") | .id' slugs.json)
+$PIVNET download-product-files -p 'tanzu-application-platform' -r $TAP_VERSION -d ide-plugins --product-file-id $($JQ_CLI '.[] | select(.name == "Tanzu App Accelerator Extension for Intellij") | .id' slugs.json)
+$PIVNET download-product-files -p 'tanzu-application-platform' -r $TAP_VERSION -d ide-plugins --product-file-id $($JQ_CLI '.[] | select(.name == "Tanzu App Accelerator Extension for Visual Studio Code") | .id' slugs.json)
+$PIVNET download-product-files -p 'tanzu-application-platform' -r $TAP_VERSION -d ide-plugins --product-file-id $($JQ_CLI '.[] | select(.name == "Tanzu Developer Tools for Visual Studio Code") | .id' slugs.json)
+$PIVNET download-product-files -p 'tanzu-application-platform' -r $TAP_VERSION -d ide-plugins --product-file-id $($JQ_CLI '.[] | select(.name == "Tanzu Developer Tools for Intellij") | .id' slugs.json)
+$PIVNET download-product-files -p 'tanzu-application-platform' -r $TAP_VERSION -d ide-plugins --product-file-id $($JQ_CLI '.[] | select(.name == "Tanzu Application Platform Developer Portal Blank Catalog") | .id' slugs.json)
+$PIVNET download-product-files -p 'tanzu-application-platform' -r $TAP_VERSION -d ide-plugins --product-file-id $($JQ_CLI '.[] | select(.name == "Tanzu Application Platform Developer Portal Yelb Catalog") | .id' slugs.json)
 
 rm slugs.txt
 rm slugs.json

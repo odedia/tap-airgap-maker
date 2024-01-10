@@ -50,6 +50,11 @@ To create the tarball:
 ```
 ./airgapme.sh
 ```
+Make sure you get two files to the airgapped environment:
+- The tarball
+- fillthegap.sh
+
+(If you forgot the shell script, it's also on the tarball, but it's a shame to deflate a 25gb tar for a simple script)
 
 ## Running in the airgapped environment
 

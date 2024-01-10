@@ -38,7 +38,8 @@ else
     exit 1
 fi
 
-echo "" > instructions.txt
+rm -f step*.txt
+
 mkdir -p workspace/tanzu-cli
 tar -xvf workspace/all-tanzu-clis/tanzu-cli-linux-amd64.tar.gz -C workspace/tanzu-cli
 
@@ -48,6 +49,7 @@ rm -rf workspace/tanzu-cli/v*
 mv workspace/tanzu-cli-tmp/* /usr/local/bin/tanzu
 rm -rf workspace/tanzu-cli-tmp
 chmod +x /usr/local/bin/tanzu
+cp jq/jq-linux-amd64 /usr/local/bin/jq
 
 echo ""
 echo "Installing Tanzu CLI Plugins"

@@ -408,13 +408,13 @@ rm slugs.txt
 rm slugs.json
 
 echo ""
-echo "Downloading documentation PDF"
-echo "-----------------------------"
+echo "Downloading documentation"
+echo "-------------------------"
 
 export TAP_MAJOR_VERSION=${TAP_VERSION%.*}
 export CLUSTER_ESSENTIALS_MAJOR_VERSION=${CLUSTER_ESSENTIALS_VERSION%.*}
 wget -U "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" "https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/$TAP_MAJOR_VERSION/tap.pdf"
-wget -U "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" "https://docs.vmware.com/en/Cluster-Essentials-for-VMware-Tanzu/$CLUSTER_ESSENTIALS_MAJOR_VERSION/cluster-essentials/deploy.html"
+wget -O "cluster-essential-docs.html" -U "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" "https://docs.vmware.com/en/Cluster-Essentials-for-VMware-Tanzu/$CLUSTER_ESSENTIALS_MAJOR_VERSION/cluster-essentials/deploy.html"
 
 echo ""
 echo "Downloading TILT"
@@ -431,7 +431,31 @@ echo ""
 echo "Folder is created! Creating tarball"
 echo "-----------------------------------"
 
-tar -czf ~/tap-airgapped-install-$TAP_VERSION.tar.gz .
+# Function to display spinning animation
+spinner() {
+    local pid=$1
+    local delay=0.1
+    local spin='-\|/'
+    while ps -p $pid &> /dev/null; do
+        printf "[%c] " "$spin"
+        spin=${spin#?}${spin%???}
+        sleep $delay
+        printf "\b\b\b\b\b"
+    done
+    printf "    \b\b\b\b"
+}
+
+# Start spinning indicator in the background
+spinner $$ &
+
+# Run tar command and capture its PID
+tar -cf ~/tap-airgapped-install-$TAP_VERSION.tar.gz . &>/dev/null
+
+wait $!
+
+# Stop spinning indicator
+wait
+
 
 echo ""
 echo "Tarball is available at ~/tap-airgapped-install-$TAP_VERSION.tar.gz"

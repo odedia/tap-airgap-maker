@@ -200,7 +200,7 @@ export sha256_hash=$(echo "$CLUSTER_ESSENTIALS_IMAGE_SHA" | grep -oE "sha256:[0-
 
 /tmp/cluster-essentials/imgpkg copy -b $CLUSTER_ESSENTIALS_IMAGE_SHA --to-tar all-cluster-essentials/cluster-essentials-bundle.tar --include-non-distributable-layers
 
-echo $CLUSTER_ESSENTIALS_IMAGE_SHA > all-cluster-essentials/sha256_hash.txt
+echo $sha256_hash > all-cluster-essentials/sha256_hash.txt
 
 echo ""
 echo "----------------------------"
@@ -378,29 +378,6 @@ docker buildx build --push --platform linux/amd64 -t "$PUSH_REGISTRY_WITH_PROJEC
 docker pull "$PUSH_REGISTRY_WITH_PROJECT/grype:latest"
 docker save -o grype-with-db.tar "$PUSH_REGISTRY_WITH_PROJECT/grype:latest"
 
-rm -f httpproxy.yaml || true
-rm -f grype-airgap-overlay.yaml || true
-rm -f flow.txt || true
-
-cat <<EOT >> flow.txt
-In the airgapped environment, run:
-
-kubectl create deployment grype --image=<grype-image-in-internal-registry> --replicas=2
-kubectl expose deployment grype --type=ClusterIP --port 8080 --target-port 80
-kubectl apply -f httpproxy.yaml
-
-kubectl config use-context <tap-cluster>
-
-kubectl apply -f grype-airgap-overlay.yaml
-
-in tap-values, include:
-
-package_overlays:
- - name: "grype"
-   secrets:
-      - name: "grype-airgap-overlay"
-EOT
-
 cd ..
 
 echo ""
@@ -432,7 +409,7 @@ mkdir -p docs
 export TAP_MAJOR_VERSION=${TAP_VERSION%.*}
 export CLUSTER_ESSENTIALS_MAJOR_VERSION=${CLUSTER_ESSENTIALS_VERSION%.*}
 wget -O "docs/tap.pdf" -U "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" "https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/$TAP_MAJOR_VERSION/tap.pdf"
-wget -O "docs/cluster-essential-docs.html" -U "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" "https://docs.vmware.com/en/Cluster-Essentials-for-VMware-Tanzu/$CLUSTER_ESSENTIALS_MAJOR_VERSION/cluster-essentials/deploy.html"
+wget -O "docs/cluster-essentials-docs.html" -U "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" "https://docs.vmware.com/en/Cluster-Essentials-for-VMware-Tanzu/$CLUSTER_ESSENTIALS_MAJOR_VERSION/cluster-essentials/deploy.html"
 
 echo ""
 echo "----------------"

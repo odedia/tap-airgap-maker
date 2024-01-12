@@ -86,7 +86,7 @@ Then, simply run:
 ./fillthegap.sh ~/tap-airgapped-install-1.7.2.tar.gz
 ```
 
-The script will all required clis, upload all required packages to the internal registry, and create a `flow.txt` that will give you a step by step instructions to install TAP in your environment with your internal registry values.
+The script will install all required clis, upload all required packages to the internal registry, and create a `flow.txt` that will give you a step by step instructions to install TAP in your environment with your internal registry values.
 
 Feedback and pull requests are welcome.
 
